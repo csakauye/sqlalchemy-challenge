@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, func
 # Database Setup
 #################################################
 # Creating engine 
-engine = create_engine("sqlite:///sqlalchemy-challenge///SurfsUp///Resources///hawaii.sqlite")
+engine = create_engine("sqlite:///SurfsUp///Resources///hawaii.sqlite")
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -31,8 +31,6 @@ session = Session(engine)
 #################################################
 app = Flask(__name__)
 
-
-
 #################################################
 # Flask Routes
 #################################################
@@ -46,8 +44,8 @@ def homepage():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end><br/>"
+        f"/api/v1.0/start/<start><br/>"
+        f"/api/v1.0/start/end/<start>/<end><br/>"
     )
 
 # Getting the query results for precipitation over the last 12 months and making it into a dictionary to jsonify
@@ -84,30 +82,35 @@ def tobs():
 
     return jsonify(tobs)
 
-@app.route("/api/v1.0/<start>")
-def start(start_dt):
+# Querying the minimum, maximum and average temperature for dates equal to and greater than the specified start date 
+@app.route("/api/v1.0/start/<start>")
+def start(start):
     sel_3 = [func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs)]
 
-    start_query = session.query(*sel_3).filter(Measurement.date >= start_dt).all()
-    
-    for strt in start_query:
-        if strt == start_dt:
-            return jsonify(start_query)
-        else: 
-            return jsonify ("Date not found")
+    start = "' '"
 
-@app.route("/api/v1.0/<start>/<end>")
-def start_end(start_at, end):
+    start_query = session.query(*sel_3).filter(Measurement.date >= start).all()
+
+    start_print = list(np.ravel(start_query))
+
+    return jsonify(start_print)
+
+# Querying the minimum, maximum and average temperature for dates in the specified date range (start-end)
+@app.route("/api/v1.0/start/end/<start>/<end>")
+def start_end(start, end):
     sel_4 = [func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs)]
     
-    start_end_query = session.query(*sel_4).filter(Measurement.date).all()
+    start = "' '"
+
+    end = "' '"
+
+    start_end_query = session.query(*sel_4).filter(Measurement.date >= start).filter(Measurement.date <= end).all()
     
-    for strt_at, end_at in start_end_query:
-        if strt_at >= start_at & end_at <= end:
-            return jsonify(start_end_query)
-        else: 
-            return jsonify ("Dates not found")
-        
+    start_end_print = list(np.ravel(start_end_query))
+
+    return jsonify(start_end_print)
+
+# Closing out the session         
 session.close()
 
 if __name__ == '__main__':
